@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI booking demo for Budget Heating And Cooling</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --panel-2: #222c38;
+      --text: #f3f6f9;
+      --muted: #9aa7b5;
+      --accent: #2dd4bf;
+      --accent-2: #14b8a6;
+      --warn: #fbbf24;
+      --border: #2b3644;
+      --ok: #34d399;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1b2a33 0%, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.45;
+      min-height: 100vh;
+    }
+    a { color: var(--accent); }
+    .banner {
+      background: #3b2f0b;
+      color: #fde68a;
+      text-align: center;
+      padding: 10px 14px;
+      font-size: .9rem;
+      border-bottom: 1px solid #78540a;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+    .hero {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 1.2fr .8fr;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(1.5rem, 3vw, 2rem); }
+    h2 { margin: 0 0 12px; font-size: 1.15rem; }
+    .sub { color: var(--muted); margin: 0 0 14px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+    .pill {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .pill strong { color: var(--text); font-weight: 600; }
+    .grid2 { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+    .services { display: grid; gap: 10px; }
+    .svc {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      text-align: left;
+      color: inherit;
+      width: 100%;
+      font: inherit;
+    }
+    .svc:hover, .svc.selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    .svc .name { font-weight: 600; }
+    .svc .meta { color: var(--muted); font-size: .85rem; }
+    .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    @media (max-width: 480px) { .slots { grid-template-columns: repeat(2, 1fr); } }
+    .slot {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 8px;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+    .slot:hover, .slot.selected { border-color: var(--accent); background: #14363a; }
+    .slot:disabled { opacity: .4; cursor: not-allowed; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color: #042f2e;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .confirm {
+      display: none;
+      background: #0f2a24;
+      border: 1px solid #1f6b57;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+      color: #bbf7d0;
+    }
+    .confirm.show { display: block; }
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 320px;
+    }
+    .bubble {
+      max-width: 85%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: .95rem;
+      white-space: pre-wrap;
+    }
+    .bubble.bot {
+      align-self: flex-start;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+    .bubble.user {
+      align-self: flex-end;
+      background: #134e4a;
+      border: 1px solid #1f766f;
+    }
+    .chat-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .chip {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .chip:hover { border-color: var(--accent); }
+    .footnote {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: .85rem;
+      text-align: center;
+    }
+    .step { color: var(--muted); font-size: .85rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .04em; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="banner">Demo by Fihma Advisory. Nothing is booked or sent. This is a walkthrough only.</div>
+  <main class="wrap">
+    <section class="hero">
+      <div class="card">
+        <div class="step">Personalized demo</div>
+        <h1>Budget Heating And Cooling</h1>
+        <p class="sub">Aurora, CO HVAC. Online booking + missed-call text-back, mocked for your review.</p>
+        <div class="pills">
+          <div class="pill"><strong>4.8</strong> stars · 355 reviews</div>
+          <div class="pill">Aurora, CO</div>
+          <div class="pill">Open 24 hours</div>
+          <div class="pill">HVAC</div>
+        </div>
+        <p class="sub">Try both flows below. No data leaves this page. No appointments or texts go out.</p>
+      </div>
+      <div class="card">
+        <h2>What this demo shows</h2>
+        <ul class="sub" style="padding-left:18px;margin:0;">
+          <li>Customers book a time without calling</li>
+          <li>If a call is missed, an AI texts back in seconds</li>
+          <li>You stay in control; this is a mock only</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="card" id="booking">
+        <h2>1. Book online</h2>
+        <p class="sub">Client-side mock. Pick a service and time to see the confirmation.</p>
+
+        <div id="step-service">
+          <div class="step">Step 1 · Choose a service</div>
+          <div class="services" id="services"></div>
+        </div>
+
+        <div id="step-time" class="hidden">
+          <div class="step">Step 2 · Pick a time (tomorrow)</div>
+          <div class="slots" id="slots"></div>
+          <button class="btn secondary" type="button" id="back-service">Back</button>
+        </div>
+
+        <div id="step-confirm" class="hidden">
+          <div class="step">Step 3 · Confirm</div>
+          <p id="summary" class="sub"></p>
+          <button class="btn" type="button" id="confirm-btn">Confirm booking (demo)</button>
+          <button class="btn secondary" type="button" id="restart-booking">Start over</button>
+          <div class="confirm" id="confirm-box">
+            Done in the demo. In a live version, Budget Heating And Cooling would get the booking and the customer would get a text confirmation. Nothing was sent here.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="missed">
+        <h2>2. Missed-call text-back</h2>
+        <p class="sub">Simulated SMS thread after a missed call from a new customer.</p>
+        <div class="chat" id="chat"></div>
+        <div class="chat-actions" id="chat-actions"></div>
+        <button class="btn secondary" type="button" id="restart-chat" style="margin-top:12px;">Replay missed call</button>
+      </div>
+    </section>
+
+    <p class="footnote">Demo by Fihma Advisory for Budget Heating And Cooling · max@fihmaadvisory.com · Nothing on this page books appointments or sends messages.</p>
+  </main>
+
+  <script>
+    const SERVICES = [{"id": "furnace", "name": "Furnace repair", "mins": 90, "price": "Quote"}, {"id": "ac", "name": "AC repair", "mins": 90, "price": "Quote"}, {"id": "tuneup", "name": "Seasonal tune-up", "mins": 75, "price": "Quote"}, {"id": "install", "name": "System install consult", "mins": 60, "price": "Free"}];
+    const SLOTS = ["9:30 AM", "10:15 AM", "11:00 AM", "1:00 PM", "2:30 PM", "4:00 PM", "5:45 PM"];
+
+    let selectedService = null;
+    let selectedSlot = null;
+
+    const servicesEl = document.getElementById("services");
+    const slotsEl = document.getElementById("slots");
+    const summaryEl = document.getElementById("summary");
+    const confirmBox = document.getElementById("confirm-box");
+
+    function show(id) {
+      ["step-service", "step-time", "step-confirm"].forEach(s => {
+        document.getElementById(s).classList.toggle("hidden", s !== id);
+      });
+    }
+
+    function renderServices() {
+      servicesEl.innerHTML = "";
+      SERVICES.forEach(svc => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "svc" + (selectedService && selectedService.id === svc.id ? " selected" : "");
+        btn.innerHTML = `<div><div class="name">${svc.name}</div><div class="meta">${svc.mins} min</div></div><div class="meta">${svc.price}</div>`;
+        btn.onclick = () => {
+          selectedService = svc;
+          selectedSlot = null;
+          confirmBox.classList.remove("show");
+          renderSlots();
+          show("step-time");
+        };
+        servicesEl.appendChild(btn);
+      });
+    }
+
+    function renderSlots() {
+      slotsEl.innerHTML = "";
+      SLOTS.forEach((t, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "slot" + (selectedSlot === t ? " selected" : "");
+        btn.textContent = t;
+        if (i === 2) btn.disabled = true; // pretend one taken
+        btn.onclick = () => {
+          selectedSlot = t;
+          summaryEl.textContent = `${selectedService.name} · tomorrow at ${t} · ${selectedService.price}. Name and phone are not collected in this demo.`;
+          show("step-confirm");
+        };
+        slotsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById("back-service").onclick = () => {
+      selectedSlot = null;
+      show("step-service");
+      renderServices();
+    };
+    document.getElementById("restart-booking").onclick = () => {
+      selectedService = null;
+      selectedSlot = null;
+      confirmBox.classList.remove("show");
+      show("step-service");
+      renderServices();
+    };
+    document.getElementById("confirm-btn").onclick = () => {
+      confirmBox.classList.add("show");
+    };
+
+    // Missed-call chat simulation
+    const chatEl = document.getElementById("chat");
+    const actionsEl = document.getElementById("chat-actions");
+    const script = [
+      { from: "bot", text: "Hey, sorry we missed your call at Budget Heating And Cooling. This is our booking assistant. Want to grab a spot today or tomorrow?" },
+      { from: "choices", choices: ["Tomorrow afternoon", "Just asking about pricing", "Talk to a human"] },
+      { from: "user", text: "Tomorrow afternoon" },
+      { from: "bot", text: "Great. We have Furnace repair at 2:30 PM or AC repair at 4:00 PM. Which works?" },
+      { from: "choices", choices: ["Furnace repair 2:30", "AC repair 4:00", "Different time"] },
+      { from: "user", text: "Furnace repair 2:30" },
+      { from: "bot", text: "Locked in for the demo: Furnace repair tomorrow at 2:30 PM. In a live setup we'd text you a confirmation and add it to your calendar. Nothing was sent from this page." },
+      { from: "choices", choices: [] }
+    ];
+
+    let chatTimer = null;
+    function clearChatTimers() {
+      if (chatTimer) {
+        clearTimeout(chatTimer);
+        chatTimer = null;
+      }
+    }
+
+    function addBubble(from, text) {
+      const div = document.createElement("div");
+      div.className = "bubble " + from;
+      div.textContent = text;
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function setChoices(choices, onPick) {
+      actionsEl.innerHTML = "";
+      choices.forEach(label => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = label;
+        b.onclick = () => onPick(label);
+        actionsEl.appendChild(b);
+      });
+    }
+
+    function runChat() {
+      clearChatTimers();
+      chatEl.innerHTML = "";
+      actionsEl.innerHTML = "";
+      let i = 0;
+
+      function next() {
+        if (i >= script.length) return;
+        const step = script[i++];
+        if (step.from === "bot" || step.from === "user") {
+          addBubble(step.from, step.text);
+          chatTimer = setTimeout(next, step.from === "bot" ? 700 : 450);
+        } else if (step.from === "choices") {
+          if (!step.choices.length) {
+            actionsEl.innerHTML = "";
+            return;
+          }
+          setChoices(step.choices, (label) => {
+            // Fast-forward along the happy path regardless of pick for the demo feel,
+            // but show the user's pick in the thread.
+            addBubble("user", label);
+            actionsEl.innerHTML = "";
+            // Skip the scripted user line if present
+            if (i < script.length && script[i].from === "user") i++;
+            chatTimer = setTimeout(next, 500);
+          });
+        }
+      }
+      next();
+    }
+
+    document.getElementById("restart-chat").onclick = runChat;
+
+    renderServices();
+    show("step-service");
+    runChat();
+  </script>
+</body>
+</html>
